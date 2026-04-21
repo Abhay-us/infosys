@@ -5,7 +5,7 @@ import org.springframework.web.bind.annotation.*;
 
 import com.infosys.backend.model.User;
 import com.infosys.backend.service.UserService;
-
+import com.infosys.backend.dto.LoginRequest;
 import jakarta.validation.Valid;
 
 @RestController
@@ -16,13 +16,26 @@ public class UserController {
     @Autowired
     private UserService userService;
 
+
     @PostMapping("/register")
     public User registerUser(
-            @Valid @RequestBody User user) {
+            @Valid @RequestBody User user
+    ) {
 
-                
         return userService.registerUser(user);
 
     }
+
+    @PostMapping("/login")
+public String loginUser(
+ @RequestBody LoginRequest request
+){
+
+   return userService.loginUser(
+      request.getEmail(),
+      request.getPassword()
+   );
+
+}
 
 }

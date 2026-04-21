@@ -8,40 +8,57 @@ import org.springframework.stereotype.Service;
 
 import com.infosys.backend.model.User;
 import com.infosys.backend.repository.UserRepository;
+import com.infosys.backend.security.JwtUtil;
 
 @Service
 public class UserService {
 
-    @Autowired
-    private UserRepository userRepository;
+        @Autowired
+        private UserRepository userRepository;
 
-    @Autowired
-    private BCryptPasswordEncoder passwordEncoder;
+        @Autowired
+        private BCryptPasswordEncoder passwordEncoder;
 
+        @Autowired
+        private JwtUtil jwtUtil;
 
-    public User registerUser(User user) {
+        public User registerUser(User user) {
 
-        Optional<User> existingUser =
-                userRepository.findByEmail(
-                        user.getEmail()
-                );
+                Optional<User> existingUser = userRepository.findByEmail(
+                                user.getEmail());
 
-        if(existingUser.isPresent()) {
+                if (existingUser.isPresent()) {
 
-            throw new RuntimeException(
-                    "Email already registered"
-            );
+                        throw new RuntimeException(
+                                        "Email already registered");
+                }
+
+                String encryptedPassword = passwordEncoder.encode(
+                                user.getPassword());
+
+                user.setPassword(encryptedPassword);
+
+                return userRepository.save(user);
         }
 
+        public String loginUser(
+                        String email,
+                        String password) {
 
-        String encryptedPassword =
-                passwordEncoder.encode(
-                        user.getPassword()
-                );
+                User user = userRepository.findByEmail(email)
+                                .orElseThrow(
+                                                () -> new RuntimeException(
+                                                                "User not found"));
 
-        user.setPassword(encryptedPassword);
+                if (!passwordEncoder.matches(
+                                password,
+                                user.getPassword())) {
+                        throw new RuntimeException(
+                                        "Invalid password");
+                }
 
-        return userRepository.save(user);
-    }
+                return jwtUtil.generateToken(email);
+
+        }
 
 }
