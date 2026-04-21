@@ -56,6 +56,7 @@ function LoginPage() {
       // KEEP POPUP
       showPopup("Login Successful", true);
     } catch (error) {
+      console.error("Login error:", error);
       // KEEP POPUP
       showPopup("Invalid Credentials");
     }

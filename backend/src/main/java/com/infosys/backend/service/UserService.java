@@ -14,13 +14,12 @@ import com.infosys.backend.security.JwtUtil;
 public class UserService {
 
         @Autowired
+        private JwtUtil jwtUtil;
+        @Autowired
         private UserRepository userRepository;
 
         @Autowired
         private BCryptPasswordEncoder passwordEncoder;
-
-        @Autowired
-        private JwtUtil jwtUtil;
 
         public User registerUser(User user) {
 
@@ -60,5 +59,4 @@ public class UserService {
                 return jwtUtil.generateToken(email);
 
         }
-
 }

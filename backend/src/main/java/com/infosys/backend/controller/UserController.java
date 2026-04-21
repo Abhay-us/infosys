@@ -10,32 +10,27 @@ import jakarta.validation.Valid;
 
 @RestController
 @RequestMapping("/api/users")
-@CrossOrigin(origins = "http://localhost:5173")
 public class UserController {
 
     @Autowired
     private UserService userService;
 
-
     @PostMapping("/register")
     public User registerUser(
-            @Valid @RequestBody User user
-    ) {
+            @Valid @RequestBody User user) {
 
         return userService.registerUser(user);
 
     }
 
     @PostMapping("/login")
-public String loginUser(
- @RequestBody LoginRequest request
-){
+    public String loginUser(
+            @RequestBody LoginRequest request) {
 
-   return userService.loginUser(
-      request.getEmail(),
-      request.getPassword()
-   );
+        return userService.loginUser(
+                request.getEmail(),
+                request.getPassword());
 
-}
+    }
 
 }

@@ -3,16 +3,19 @@ import { useNavigate } from "react-router-dom";
 import { registerUser } from "../services/authService";
 import "../styles/register.css";
 
+const INITIAL_FORM_DATA = {
+  name: "",
+  email: "",
+  phone: "",
+  password: "",
+  confirmPassword: "",
+};
+
 function RegisterForm() {
   const navigate = useNavigate();
 
-  const [formData, setFormData] = useState({
-    name: "",
-    email: "",
-    phone: "",
-    password: "",
-    confirmPassword: "",
-  });
+  const [formData, setFormData] = useState(INITIAL_FORM_DATA);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   // POPUP STATE
   const [popup, setPopup] = useState({
@@ -23,9 +26,11 @@ function RegisterForm() {
   });
 
   const handleChange = (e) => {
+    const { name, value } = e.target;
+
     setFormData({
       ...formData,
-      [e.target.name]: e.target.value,
+      [name]: name === "phone" ? value.replace(/\D/g, "").slice(0, 10) : value,
     });
   };
 
@@ -39,18 +44,22 @@ function RegisterForm() {
   };
 
   const validateForm = () => {
-    if (!formData.name.trim()) {
+    const trimmedName = formData.name.trim();
+    const trimmedEmail = formData.email.trim().toLowerCase();
+    const phoneDigits = formData.phone.replace(/\D/g, "");
+
+    if (!trimmedName) {
       showPopup("Validation Error", "Name is required");
       return false;
     }
 
-    if (!formData.email.includes("@")) {
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimmedEmail)) {
       showPopup("Validation Error", "Invalid email");
       return false;
     }
 
-    if (formData.phone.length < 10) {
-      showPopup("Validation Error", "Invalid phone number");
+    if (phoneDigits.length !== 10) {
+      showPopup("Validation Error", "Phone number must be exactly 10 digits");
       return false;
     }
 
@@ -76,16 +85,17 @@ function RegisterForm() {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    if (!validateForm()) {
+    if (isSubmitting || !validateForm()) {
       return;
     }
 
+    setIsSubmitting(true);
+
     try {
-      // BACKEND UNCHANGED
       const payload = {
-        name: formData.name,
-        email: formData.email,
-        phone: formData.phone,
+        name: formData.name.trim(),
+        email: formData.email.trim().toLowerCase(),
+        phone: formData.phone.replace(/\D/g, ""),
         password: formData.password,
       };
 
@@ -97,42 +107,53 @@ function RegisterForm() {
         true,
       );
 
-      setFormData({
-        name: "",
-        email: "",
-        phone: "",
-        password: "",
-        confirmPassword: "",
-      });
+      setFormData(INITIAL_FORM_DATA);
     } catch (error) {
       console.error(error);
 
       if (error.response) {
-        showPopup("Registration Failed", JSON.stringify(error.response.data));
+        const { data, status } = error.response;
+        const message =
+          typeof data === "string"
+            ? data
+            : data?.message ||
+              data?.error ||
+              (status === 409
+                ? "An account with this email already exists"
+                : "Registration failed. Please try again.");
+
+        showPopup("Registration Failed", message);
       } else {
         showPopup("Connection Error", "Server connection error");
       }
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
   return (
-    <div className="auth-container">
-      <div className="auth-left">
-        <img src="/register-illustration.png" alt="Register" />
-
-        <h1>Join Us Today</h1>
-
-        <p>Create your account and start your journey.</p>
-      </div>
-
+    <div className="register-page">
       <form className="register-form" onSubmit={handleSubmit}>
         <h2>Create Account</h2>
+        <p className="register-subtitle">
+          Fill in your details to create a new account.
+        </p>
+
+        {popup.show && (
+          <div
+            className={`form-message ${popup.success ? "success" : "error"}`}
+          >
+            <strong>{popup.title}</strong>
+            <span>{popup.message}</span>
+          </div>
+        )}
 
         <input
           name="name"
           placeholder="Full Name"
           value={formData.name}
           onChange={handleChange}
+          autoComplete="name"
         />
 
         <input
@@ -141,13 +162,18 @@ function RegisterForm() {
           placeholder="Email"
           value={formData.email}
           onChange={handleChange}
+          autoComplete="email"
         />
 
         <input
+          type="tel"
           name="phone"
           placeholder="Phone Number"
           value={formData.phone}
           onChange={handleChange}
+          inputMode="numeric"
+          maxLength="10"
+          autoComplete="tel"
         />
 
         <input
@@ -156,6 +182,7 @@ function RegisterForm() {
           placeholder="Password"
           value={formData.password}
           onChange={handleChange}
+          autoComplete="new-password"
         />
 
         <input
@@ -164,9 +191,12 @@ function RegisterForm() {
           placeholder="Confirm Password"
           value={formData.confirmPassword}
           onChange={handleChange}
+          autoComplete="new-password"
         />
 
-        <button type="submit">Register</button>
+        <button type="submit" disabled={isSubmitting}>
+          {isSubmitting ? "Registering..." : "Register"}
+        </button>
 
         <button
           type="button"
@@ -176,39 +206,6 @@ function RegisterForm() {
           Already have an account? Login
         </button>
       </form>
-
-      {/* POPUP MODAL */}
-
-      {popup.show && (
-        <div className="popup-overlay">
-          <div className="popup-box">
-            <h2>{popup.title}</h2>
-
-            <p>{popup.message}</p>
-
-            {popup.success && (
-              <button
-                className="popup-login"
-                onClick={() => navigate("/login")}
-              >
-                Go To Login
-              </button>
-            )}
-
-            <button
-              className="popup-close"
-              onClick={() =>
-                setPopup({
-                  ...popup,
-                  show: false,
-                })
-              }
-            >
-              Close
-            </button>
-          </div>
-        </div>
-      )}
     </div>
   );
 }

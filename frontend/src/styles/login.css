@@ -4,7 +4,10 @@
   height: 100vh;
   width: 100%;
   overflow: hidden;
-  background: #f8f8f8;
+  background: #dbdbdb;
+}
+input {
+  background-color: transparent !important;
 }
 
 /* LEFT IMAGE PANEL */
@@ -30,14 +33,14 @@
   font-size: 52px;
   font-weight: 700;
   margin-bottom: 20px;
-  color: black;
+  color: rgb(226, 226, 226);
 }
 
 .login-left p {
   font-size: 22px;
   max-width: 500px;
   line-height: 1.6;
-  color: black;
+  color: rgb(234, 234, 234);
 }
 
 /* RIGHT FORM CARD */
@@ -66,7 +69,7 @@
 .login-form input {
   padding: 16px 20px;
   margin-bottom: 20px;
-
+  background-color: transparent;
   border: 1px solid #ccc;
   border-radius: 14px;
 
@@ -78,6 +81,7 @@
 
 .login-form input:focus {
   border-color: black;
+  background-color: transparent;
   box-shadow: 0 0 6px rgba(0, 0, 0, 0.1);
 }
 
