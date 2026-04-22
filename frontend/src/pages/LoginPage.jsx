@@ -17,6 +17,14 @@ function LoginPage() {
     success: false,
   });
 
+  const closePopup = () => {
+    setPopup({
+      show: false,
+      message: "",
+      success: false,
+    });
+  };
+
   const showPopup = (message, success = false) => {
     setPopup({
       show: true,
@@ -26,11 +34,7 @@ function LoginPage() {
 
     // Auto close after 1 second
     setTimeout(() => {
-      setPopup({
-        show: false,
-        message: "",
-        success: false,
-      });
+      closePopup();
 
       if (success) {
         navigate("/dashboard");
@@ -105,10 +109,16 @@ function LoginPage() {
       {/* POPUP (UNCHANGED) */}
       {popup.show && (
         <div className="popup-overlay">
-          <div className="popup-box">
+          <div
+            className={`popup-box ${popup.success ? "popup-success" : "popup-error"}`}
+          >
             <h2>{popup.success ? "Success" : "Error"}</h2>
 
             <p>{popup.message}</p>
+
+            <button type="button" className="popup-close-btn" onClick={closePopup}>
+              OK
+            </button>
           </div>
         </div>
       )}

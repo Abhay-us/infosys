@@ -4,10 +4,8 @@
   height: 100vh;
   width: 100%;
   overflow: hidden;
-  background: #dbdbdb;
-}
-input {
-  background-color: transparent !important;
+  background: #f8f8f8;
+  position: relative;
 }
 
 /* LEFT IMAGE PANEL */
@@ -26,21 +24,21 @@ input {
 
   padding-left: 80px;
 
-  color: black;
+  color: white;
 }
 
 .login-left h1 {
   font-size: 52px;
   font-weight: 700;
   margin-bottom: 20px;
-  color: rgb(226, 226, 226);
+  color: white;
 }
 
 .login-left p {
   font-size: 22px;
   max-width: 500px;
   line-height: 1.6;
-  color: rgb(234, 234, 234);
+  color: white;
 }
 
 /* RIGHT FORM CARD */
@@ -69,9 +67,11 @@ input {
 .login-form input {
   padding: 16px 20px;
   margin-bottom: 20px;
-  background-color: transparent;
+
   border: 1px solid #ccc;
   border-radius: 14px;
+  background: #ffffff;
+  color: #000000;
 
   font-size: 16px;
   outline: none;
@@ -79,9 +79,12 @@ input {
   transition: 0.3s;
 }
 
+.login-form input::placeholder {
+  color: #555555;
+}
+
 .login-form input:focus {
   border-color: black;
-  background-color: transparent;
   box-shadow: 0 0 6px rgba(0, 0, 0, 0.1);
 }
 
@@ -112,6 +115,75 @@ input {
   color: black !important;
   margin-top: 20px;
   font-weight: 600;
+}
+
+.popup-overlay {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  background: rgba(0, 0, 0, 0.45);
+  z-index: 9999;
+}
+
+.popup-box {
+  width: min(380px, 100%);
+  padding: 28px 24px;
+  border-radius: 20px;
+  background: #ffffff;
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.2);
+  text-align: center;
+  animation: popupFadeIn 0.25s ease;
+}
+
+.popup-box h2 {
+  margin-bottom: 12px;
+  font-size: 28px;
+}
+
+.popup-box p {
+  margin-bottom: 20px;
+  font-size: 17px;
+  line-height: 1.5;
+  color: #333333;
+}
+
+.popup-success {
+  border-top: 6px solid #1f9d55;
+}
+
+.popup-error {
+  border-top: 6px solid #d93025;
+}
+
+.popup-close-btn {
+  min-width: 120px;
+  padding: 12px 18px;
+  border: none;
+  border-radius: 12px;
+  background: #111111;
+  color: #ffffff;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.popup-close-btn:hover {
+  opacity: 0.92;
+}
+
+@keyframes popupFadeIn {
+  from {
+    opacity: 0;
+    transform: scale(0.92);
+  }
+
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
 }
 
 /* MOBILE */
