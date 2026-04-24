@@ -4,12 +4,22 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
+import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 
+import com.infosys.backend.security.JwtAuthenticationFilter;
+
 @Configuration
 public class SecurityConfig {
+
+        private final JwtAuthenticationFilter jwtAuthenticationFilter;
+
+        public SecurityConfig(JwtAuthenticationFilter jwtAuthenticationFilter) {
+                this.jwtAuthenticationFilter = jwtAuthenticationFilter;
+        }
 
         @Bean
         public BCryptPasswordEncoder passwordEncoder() {
@@ -31,9 +41,16 @@ public class SecurityConfig {
 
                                                 .anyRequest().authenticated())
 
+                                .sessionManagement(session -> session
+                                                .sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+
                                 .formLogin(form -> form.disable()) // disable login page
 
-                                .httpBasic(basic -> basic.disable()); // disable basic auth
+                                .httpBasic(basic -> basic.disable()) // disable basic auth
+
+                                .addFilterBefore(
+                                                jwtAuthenticationFilter,
+                                                UsernamePasswordAuthenticationFilter.class);
 
                 return http.build();
         }

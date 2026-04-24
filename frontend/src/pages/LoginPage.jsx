@@ -1,6 +1,6 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { loginUser } from "../services/authService";
+import { loginUser, validateToken } from "../services/authService";
 import "../styles/login.css";
 
 function LoginPage() {
@@ -16,6 +16,25 @@ function LoginPage() {
     message: "",
     success: false,
   });
+
+  useEffect(() => {
+    const token = localStorage.getItem("token");
+
+    if (!token) {
+      return;
+    }
+
+    const checkExistingSession = async () => {
+      try {
+        await validateToken(token);
+        navigate("/dashboard", { replace: true });
+      } catch (error) {
+        localStorage.removeItem("token");
+      }
+    };
+
+    checkExistingSession();
+  }, [navigate]);
 
   const closePopup = () => {
     setPopup({
@@ -100,7 +119,7 @@ function LoginPage() {
         <button
           type="button"
           className="login-btn"
-          onClick={() => navigate("/")}
+          onClick={() => navigate("/register")}
         >
           Don't have an account? Sign Up
         </button>

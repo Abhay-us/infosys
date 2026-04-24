@@ -1,6 +1,7 @@
 package com.infosys.backend.controller;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import com.infosys.backend.model.User;
@@ -31,6 +32,11 @@ public class UserController {
                 request.getEmail(),
                 request.getPassword());
 
+    }
+
+    @GetMapping("/validate")
+    public ResponseEntity<String> validateToken() {
+        return ResponseEntity.ok("Token is valid");
     }
 
 }
