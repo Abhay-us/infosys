@@ -24,7 +24,8 @@ function ProtectedRoute({ children }) {
         if (isMounted) {
           setStatus("valid");
         }
-      } catch (error) {
+      // eslint-disable-next-line no-unused-vars
+      } catch (error ) {
         localStorage.removeItem("token");
 
         if (isMounted) {

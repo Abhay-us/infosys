@@ -28,7 +28,7 @@ function LoginPage() {
       try {
         await validateToken(token);
         navigate("/dashboard", { replace: true });
-      } catch (error) {
+      } catch {
         localStorage.removeItem("token");
       }
     };
