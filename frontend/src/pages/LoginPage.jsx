@@ -19,6 +19,7 @@ function LoginPage() {
 
   useEffect(() => {
     const token = localStorage.getItem("token");
+    const role = localStorage.getItem("role");
 
     if (!token) {
       return;
@@ -27,9 +28,11 @@ function LoginPage() {
     const checkExistingSession = async () => {
       try {
         await validateToken(token);
-        navigate("/dashboard", { replace: true });
+        navigate(localStorage.getItem("redirectTo") || (role === "ADMIN" ? "/admin" : "/products"), { replace: true });
       } catch {
         localStorage.removeItem("token");
+        localStorage.removeItem("role");
+        localStorage.removeItem("redirectTo");
       }
     };
 
@@ -56,7 +59,7 @@ function LoginPage() {
       closePopup();
 
       if (success) {
-        navigate("/dashboard");
+        navigate(localStorage.getItem("redirectTo") || "/products");
       }
     }, 1000);
   };
@@ -73,8 +76,11 @@ function LoginPage() {
 
     try {
       const response = await loginUser(formData);
+      const loginData = response.data;
 
-      localStorage.setItem("token", response.data);
+      localStorage.setItem("token", loginData.token);
+      localStorage.setItem("role", loginData.role);
+      localStorage.setItem("redirectTo", loginData.redirectTo);
 
       // KEEP POPUP
       showPopup("Login Successful", true);

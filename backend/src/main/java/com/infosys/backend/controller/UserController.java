@@ -7,6 +7,7 @@ import org.springframework.web.bind.annotation.*;
 import com.infosys.backend.model.User;
 import com.infosys.backend.service.UserService;
 import com.infosys.backend.dto.LoginRequest;
+import com.infosys.backend.dto.LoginResponse;
 import jakarta.validation.Valid;
 
 @RestController
@@ -25,7 +26,7 @@ public class UserController {
     }
 
     @PostMapping("/login")
-    public String loginUser(
+    public LoginResponse loginUser(
             @RequestBody LoginRequest request) {
 
         return userService.loginUser(

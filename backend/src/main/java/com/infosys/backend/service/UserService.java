@@ -3,9 +3,11 @@ package com.infosys.backend.service;
 import java.util.Optional;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 
+import com.infosys.backend.dto.LoginResponse;
 import com.infosys.backend.model.User;
 import com.infosys.backend.repository.UserRepository;
 import com.infosys.backend.security.JwtUtil;
@@ -20,6 +22,12 @@ public class UserService {
 
         @Autowired
         private BCryptPasswordEncoder passwordEncoder;
+
+        @Value("${app.admin.email}")
+        private String adminEmail;
+
+        @Value("${app.admin.password}")
+        private String adminPassword;
 
         public User registerUser(User user) {
 
@@ -40,9 +48,13 @@ public class UserService {
                 return userRepository.save(user);
         }
 
-        public String loginUser(
+        public LoginResponse loginUser(
                         String email,
                         String password) {
+
+                if (adminEmail.equalsIgnoreCase(email) && adminPassword.equals(password)) {
+                        return new LoginResponse(jwtUtil.generateToken(adminEmail), "ADMIN", "/admin");
+                }
 
                 User user = userRepository.findByEmail(email)
                                 .orElseThrow(
@@ -56,7 +68,7 @@ public class UserService {
                                         "Invalid password");
                 }
 
-                return jwtUtil.generateToken(email);
+                return new LoginResponse(jwtUtil.generateToken(email), "USER", "/products");
 
         }
 }

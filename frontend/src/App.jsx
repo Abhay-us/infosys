@@ -1,8 +1,9 @@
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Navigate, Routes, Route } from "react-router-dom";
 
 import RegisterPage from "./pages/RegisterPage";
 import LoginPage from "./pages/LoginPage";
 import DashboardPage from "./pages/DashboardPage";
+import AdminPage from "./pages/AdminPage";
 import ProtectedRoute from "./components/ProtectedRoute";
 
 function App() {
@@ -16,10 +17,21 @@ function App() {
         <Route path="/register" element={<RegisterPage />} />
 
         <Route
-          path="/dashboard"
+          path="/products/:productId?"
           element={
-            <ProtectedRoute>
+            <ProtectedRoute role="USER">
               <DashboardPage />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route path="/dashboard" element={<Navigate to="/products" replace />} />
+
+        <Route
+          path="/admin"
+          element={
+            <ProtectedRoute role="ADMIN">
+              <AdminPage />
             </ProtectedRoute>
           }
         />

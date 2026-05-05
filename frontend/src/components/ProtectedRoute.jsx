@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { Navigate } from "react-router-dom";
 import { validateToken } from "../services/authService";
 
-function ProtectedRoute({ children }) {
+function ProtectedRoute({ children, role }) {
   const [status, setStatus] = useState("checking");
 
   useEffect(() => {
@@ -20,6 +20,13 @@ function ProtectedRoute({ children }) {
 
       try {
         await validateToken(token);
+
+        const currentRole = localStorage.getItem("role");
+
+        if (role && currentRole !== role) {
+          setStatus("invalid");
+          return;
+        }
 
         if (isMounted) {
           setStatus("valid");
@@ -39,7 +46,7 @@ function ProtectedRoute({ children }) {
     return () => {
       isMounted = false;
     };
-  }, []);
+  }, [role]);
 
   if (status === "checking") {
     return <div style={{ textAlign: "center", marginTop: "120px" }}>Validating session...</div>;

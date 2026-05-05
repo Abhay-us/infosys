@@ -2,8 +2,11 @@ package com.infosys.backend.service;
 
 import java.util.List;
 import java.util.stream.Collectors;
+import org.springframework.validation.annotation.Validated;
 
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+import org.springframework.web.server.ResponseStatusException;
 
 import com.infosys.backend.model.Product;
 import com.infosys.backend.repository.ProductRepository;
@@ -11,6 +14,7 @@ import com.infosys.backend.repository.ProductRepository;
 import jakarta.validation.Valid;
 
 @Service
+@Validated
 public class ProductService {
 
     private final ProductRepository productRepository;
@@ -23,30 +27,42 @@ public class ProductService {
         return productRepository.save(product);
     }
 
+    public Product getProductById(Long id) {
+        return productRepository.findById(id)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Product not found"));
+    }
+
     public List<Product> getProducts(Boolean activeOnly, String category, String q) {
         boolean onlyActive = activeOnly == null ? true : activeOnly.booleanValue();
-        String query = q == null ? null : q.trim();
-        String cat = category == null ? null : category.trim();
+        String query = normalize(q);
+        String cat = normalize(category);
 
-        List<Product> base;
-
-        if (query != null && !query.isEmpty()) {
-            base = productRepository.findByNameContainingIgnoreCase(query);
-        } else if (cat != null && !cat.isEmpty()) {
-            base = productRepository.findByCategory(cat);
-        } else if (onlyActive) {
-            base = productRepository.findByIsActiveTrue();
-        } else {
-            base = productRepository.findAll();
-        }
-
-        if (!onlyActive) {
-            return base;
-        }
-
-        return base.stream()
-                .filter(p -> Boolean.TRUE.equals(p.getIsActive()))
+        return productRepository.findAll().stream()
+                .filter(product -> !onlyActive || Boolean.TRUE.equals(product.getIsActive()))
+                .filter(product -> cat == null || matchesCategory(product, cat))
+                .filter(product -> query == null || matchesQuery(product, query))
                 .collect(Collectors.toList());
     }
-}
 
+    private String normalize(String value) {
+        if (value == null || value.trim().isEmpty()) {
+            return null;
+        }
+
+        return value.trim().toLowerCase();
+    }
+
+    private boolean matchesCategory(Product product, String category) {
+        return contains(product.getCategory(), category);
+    }
+
+    private boolean matchesQuery(Product product, String query) {
+        return contains(product.getName(), query)
+                || contains(product.getDescription(), query)
+                || contains(product.getCategory(), query);
+    }
+
+    private boolean contains(String value, String query) {
+        return value != null && value.toLowerCase().contains(query);
+    }
+}
