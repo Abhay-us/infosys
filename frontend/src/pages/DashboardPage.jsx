@@ -1,38 +1,19 @@
-import { useCallback, useEffect, useState } from "react";
-import { useNavigate, useParams } from "react-router-dom";
+import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 
-import { getProductById, getProducts } from "../services/productService";
+import { getProducts } from "../services/productService";
 import "../styles/dashboard.css";
 
 function DashboardPage() {
   const navigate = useNavigate();
-  const { productId: routeProductId } = useParams();
   const [products, setProducts] = useState([]);
   const [categories, setCategories] = useState([]);
-  const [selectedProduct, setSelectedProduct] = useState(null);
-  const [detailStatus, setDetailStatus] = useState("idle");
   const [search, setSearch] = useState("");
   const [category, setCategory] = useState("");
   const [activeOnly, setActiveOnly] = useState(true);
   const [productId, setProductId] = useState("");
   const [status, setStatus] = useState("loading");
   const [message, setMessage] = useState("");
-  const isDetailOpen = Boolean(routeProductId);
-
-  const fetchProductDetails = useCallback(async (id) => {
-    setDetailStatus("loading");
-    setMessage("");
-
-    try {
-      const response = await getProductById(id);
-      setSelectedProduct(response.data);
-      setDetailStatus("ready");
-    } catch (error) {
-      setSelectedProduct(null);
-      setDetailStatus("error");
-      setMessage(error.response?.status === 404 ? "No product found with that ID." : "Unable to fetch product by ID.");
-    }
-  }, []);
 
   useEffect(() => {
     const timeoutId = window.setTimeout(async () => {
@@ -74,18 +55,6 @@ function DashboardPage() {
     loadCategories();
   }, []);
 
-  useEffect(() => {
-    if (!routeProductId) {
-      return;
-    }
-
-    const timeoutId = window.setTimeout(() => {
-      fetchProductDetails(routeProductId);
-    }, 0);
-
-    return () => window.clearTimeout(timeoutId);
-  }, [fetchProductDetails, routeProductId]);
-
   const handleLogout = () => {
     localStorage.removeItem("token");
     localStorage.removeItem("role");
@@ -106,10 +75,6 @@ function DashboardPage() {
 
   const openProductDetails = (id) => {
     navigate(`/products/${id}`);
-  };
-
-  const closeProductDetails = () => {
-    navigate("/products");
   };
 
   return (
@@ -217,56 +182,6 @@ function DashboardPage() {
           ))}
         {status === "ready" && products.length === 0 && <p className="empty-state">No products match your filters.</p>}
       </section>
-
-      {isDetailOpen && (
-        <div className="modal-backdrop" onClick={closeProductDetails}>
-          <section className="product-modal" onClick={(event) => event.stopPropagation()} role="dialog" aria-modal="true" aria-label="Product details">
-            <button className="modal-close" type="button" onClick={closeProductDetails} aria-label="Close product details">
-              x
-            </button>
-
-            {detailStatus === "loading" && <p className="empty-state">Loading product details...</p>}
-
-            {detailStatus === "error" && <p className="empty-state">Unable to load product details.</p>}
-
-            {detailStatus === "ready" && selectedProduct && (
-              <div className="modal-content">
-                <div className="modal-image">
-                  {selectedProduct.imageUrl ? (
-                    <img alt={selectedProduct.name} src={selectedProduct.imageUrl} />
-                  ) : (
-                    <span>{getInitials(selectedProduct.name)}</span>
-                  )}
-                </div>
-
-                <div className="modal-details">
-                  <div className="product-card-title">
-                    <span className="product-id">Product #{selectedProduct.id}</span>
-                    <span className={selectedProduct.isActive ? "active-pill" : "inactive-pill"}>
-                      {selectedProduct.isActive ? "Active" : "Inactive"}
-                    </span>
-                  </div>
-
-                  <h2>{selectedProduct.name}</h2>
-                  <p className="modal-category">{selectedProduct.category || "Uncategorized"}</p>
-                  <p className="modal-description">{selectedProduct.description || "No full description available for this product."}</p>
-
-                  <div className="modal-metrics">
-                    <article>
-                      <span>Price</span>
-                      <strong>{formatPrice(selectedProduct.price)}</strong>
-                    </article>
-                    <article>
-                      <span>Stock</span>
-                      <strong>{selectedProduct.stockQuantity ?? 0}</strong>
-                    </article>
-                  </div>
-                </div>
-              </div>
-            )}
-          </section>
-        </div>
-      )}
     </main>
   );
 }

@@ -27,6 +27,19 @@ public class ProductService {
         return productRepository.save(product);
     }
 
+    public Product updateProduct(Long id, @Valid Product incoming) {
+        Product existing = getProductById(id);
+        existing.setName(incoming.getName());
+        existing.setDescription(incoming.getDescription());
+        existing.setPrice(incoming.getPrice());
+        existing.setStockQuantity(incoming.getStockQuantity());
+        existing.setCategory(incoming.getCategory());
+        existing.setImageUrl(incoming.getImageUrl());
+        existing.setIsActive(incoming.getIsActive());
+
+        return productRepository.save(existing);
+    }
+
     public Product getProductById(Long id) {
         return productRepository.findById(id)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Product not found"));

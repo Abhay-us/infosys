@@ -42,3 +42,9 @@ export const addProduct = (data) => {
     headers: authHeaders(),
   });
 };
+
+export const updateProduct = (id, data) => {
+  return axios.put(`${API}/${id}`, data, {
+    headers: authHeaders(),
+  });
+};

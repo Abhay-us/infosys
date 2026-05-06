@@ -28,7 +28,8 @@
 }
 
 .admin-hero button,
-.admin-form button {
+.admin-form button[type="submit"],
+.admin-cancel-button {
   min-height: 44px;
   border: 0;
   border-radius: var(--radius);
@@ -146,18 +147,57 @@
   accent-color: var(--primary);
 }
 
-.admin-form button {
+.admin-form button[type="submit"] {
   background: var(--primary);
   color: #fff;
+  flex: 1;
 }
 
-.admin-form button:hover {
+.admin-form button[type="submit"]:hover {
   background: var(--primary-dark);
 }
 
-.admin-form button:disabled {
+.admin-form button[type="submit"]:disabled {
   background: #9aa9bc;
   cursor: not-allowed;
+}
+
+.admin-form-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  align-items: center;
+}
+
+.admin-cancel-button {
+  padding: 0 16px;
+  background: var(--surface-strong);
+  color: #fff;
+}
+
+.admin-cancel-button:hover:not(:disabled) {
+  filter: brightness(1.06);
+}
+
+.admin-cancel-button:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.admin-edit-button {
+  min-height: 36px;
+  padding: 0 12px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: #fff;
+  color: var(--primary);
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.admin-edit-button:hover {
+  border-color: var(--primary);
+  background: rgba(35, 100, 170, 0.06);
 }
 
 .admin-products {
@@ -214,7 +254,7 @@
 .admin-table-wrap table {
   width: 100%;
   border-collapse: collapse;
-  min-width: 720px;
+  min-width: 780px;
 }
 
 .admin-table-wrap th,

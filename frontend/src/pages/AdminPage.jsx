@@ -1,7 +1,7 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 
-import { addProduct, getProducts } from "../services/productService";
+import { addProduct, getProducts, updateProduct } from "../services/productService";
 import "../styles/admin.css";
 
 const INITIAL_PRODUCT = {
@@ -16,6 +16,7 @@ const INITIAL_PRODUCT = {
 
 function AdminPage() {
   const navigate = useNavigate();
+  const formSectionRef = useRef(null);
   const [formData, setFormData] = useState(INITIAL_PRODUCT);
   const [products, setProducts] = useState([]);
   const [categories, setCategories] = useState([]);
@@ -25,6 +26,7 @@ function AdminPage() {
   const [status, setStatus] = useState("loading");
   const [message, setMessage] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [editingId, setEditingId] = useState(null);
 
   const totalStock = products.reduce((sum, product) => sum + Number(product.stockQuantity || 0), 0);
   const activeCount = products.filter((product) => product.isActive).length;
@@ -44,7 +46,6 @@ function AdminPage() {
 
   const loadProducts = async () => {
     setStatus("loading");
-    setMessage("");
 
     try {
       const response = await getProducts({ q: search, category, activeOnly });
@@ -58,7 +59,10 @@ function AdminPage() {
   };
 
   useEffect(() => {
-    const timeoutId = window.setTimeout(loadProducts, 300);
+    const timeoutId = window.setTimeout(() => {
+      setMessage("");
+      void loadProducts();
+    }, 300);
     return () => window.clearTimeout(timeoutId);
   }, [search, category, activeOnly]);
 
@@ -83,24 +87,60 @@ function AdminPage() {
     }));
   };
 
+  const handleCancelEdit = () => {
+    setEditingId(null);
+    setFormData(INITIAL_PRODUCT);
+    setMessage("");
+  };
+
+  const handleStartEdit = (product) => {
+    window.requestAnimationFrame(() => {
+      formSectionRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+    });
+
+    setFormData({
+      name: product.name ?? "",
+      description: product.description ?? "",
+      price: String(product.price ?? ""),
+      stockQuantity: String(product.stockQuantity ?? ""),
+      category: product.category ?? "",
+      imageUrl: product.imageUrl ?? "",
+      isActive: Boolean(product.isActive),
+    });
+    setEditingId(Number(product.id));
+    setMessage("");
+  };
+
   const handleSubmit = async (event) => {
     event.preventDefault();
     setIsSubmitting(true);
     setMessage("");
+    const idBeingEdited = editingId;
+    const isEdit = idBeingEdited != null;
+
+    const payload = {
+      name: formData.name.trim(),
+      description: (formData.description || "").trim(),
+      price: Number(formData.price),
+      stockQuantity: Number(formData.stockQuantity),
+      category: (formData.category || "").trim(),
+      imageUrl: (formData.imageUrl || "").trim(),
+      isActive: Boolean(formData.isActive),
+    };
 
     try {
-      await addProduct({
-        ...formData,
-        price: Number(formData.price),
-        stockQuantity: Number(formData.stockQuantity),
-      });
-
+      if (isEdit) {
+        await updateProduct(idBeingEdited, payload);
+      } else {
+        await addProduct(payload);
+      }
+      setEditingId(null);
       setFormData(INITIAL_PRODUCT);
-      setMessage("Product added successfully.");
       await refreshCategories();
       await loadProducts();
+      setMessage(isEdit ? "Product updated successfully." : "Product added successfully.");
     } catch (error) {
-      setMessage(error.response?.data?.message || "Unable to add product. Check all required fields.");
+      setMessage(parseApiError(error, isEdit ? "Unable to update product." : "Unable to add product."));
     } finally {
       setIsSubmitting(false);
     }
@@ -135,10 +175,10 @@ function AdminPage() {
       </section>
 
       <section className="admin-layout">
-        <form className="admin-form" onSubmit={handleSubmit}>
+        <form ref={formSectionRef} className="admin-form" onSubmit={handleSubmit}>
           <div>
-            <p className="eyebrow">New product</p>
-            <h2>Add Product</h2>
+            <p className="eyebrow">{editingId != null ? "Editing" : "New product"}</p>
+            <h2>{editingId != null ? `Edit product #${editingId}` : "Add Product"}</h2>
           </div>
 
           <input name="name" value={formData.name} onChange={handleChange} placeholder="Product name" required />
@@ -157,9 +197,16 @@ function AdminPage() {
             <span>Product is active</span>
           </label>
 
-          <button type="submit" disabled={isSubmitting}>
-            {isSubmitting ? "Adding..." : "Add Product"}
-          </button>
+          <div className="admin-form-actions">
+            {editingId != null && (
+              <button type="button" className="admin-cancel-button" onClick={handleCancelEdit} disabled={isSubmitting}>
+                Cancel edit
+              </button>
+            )}
+            <button type="submit" disabled={isSubmitting}>
+              {isSubmitting ? "Saving..." : editingId != null ? "Save changes" : "Add Product"}
+            </button>
+          </div>
         </form>
 
         <section className="admin-products">
@@ -196,6 +243,7 @@ function AdminPage() {
                   <th>Price</th>
                   <th>Stock</th>
                   <th>Status</th>
+                  <th>Actions</th>
                 </tr>
               </thead>
               <tbody>
@@ -211,6 +259,19 @@ function AdminPage() {
                         <span className={product.isActive ? "active-pill" : "inactive-pill"}>
                           {product.isActive ? "Active" : "Inactive"}
                         </span>
+                      </td>
+                      <td>
+                        <button
+                          type="button"
+                          className="admin-edit-button"
+                          onClick={(event) => {
+                            event.preventDefault();
+                            event.stopPropagation();
+                            handleStartEdit(product);
+                          }}
+                        >
+                          Edit
+                        </button>
                       </td>
                     </tr>
                   ))}
@@ -230,6 +291,54 @@ function formatPrice(value) {
     style: "currency",
     currency: "INR",
   }).format(Number(value || 0));
+}
+
+function parseApiError(error, fallback) {
+  const status = error.response?.status;
+  const data = error.response?.data;
+
+  if (!data) {
+    return status === 0 || error.code === "ERR_NETWORK"
+      ? "Cannot reach server. Is the backend running on port 8080?"
+      : fallback;
+  }
+
+  if (typeof data === "string" && data.trim()) {
+    return data;
+  }
+
+  if (typeof data.message === "string" && data.message.trim()) {
+    return data.message;
+  }
+
+  if (Array.isArray(data.errors) && data.errors.length) {
+    const parts = data.errors.map((item) => {
+      if (typeof item === "string") {
+        return item;
+      }
+      if (item && typeof item === "object") {
+        return item.defaultMessage || item.message || item.field + ": " + (item.defaultMessage || "");
+      }
+      return String(item);
+    });
+    return parts.filter(Boolean).join(" ");
+  }
+
+  if (data.errors && typeof data.errors === "object" && !Array.isArray(data.errors)) {
+    return Object.entries(data.errors)
+      .map(([field, msg]) => `${field}: ${Array.isArray(msg) ? msg.join(", ") : msg}`)
+      .join(" ");
+  }
+
+  if (typeof data.error === "string" && data.error.trim()) {
+    return data.error;
+  }
+
+  if (status === 401) {
+    return "Session expired. Please login again.";
+  }
+
+  return fallback;
 }
 
 export default AdminPage;
