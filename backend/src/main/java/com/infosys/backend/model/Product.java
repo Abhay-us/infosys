@@ -33,6 +33,8 @@ public class Product {
     @Column(length = 100)
     private String category;
 
+    @Lob
+    @Column(columnDefinition = "LONGTEXT")
     private String imageUrl;
 
     // Soft delete / visibility control

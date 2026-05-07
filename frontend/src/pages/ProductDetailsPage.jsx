@@ -1,6 +1,8 @@
 import { useCallback, useEffect, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 
+import CartLink from "../components/CartLink";
+import { addToCart, getCartCount } from "../services/cartService";
 import { getProductById } from "../services/productService";
 import "../styles/dashboard.css";
 
@@ -11,6 +13,7 @@ function ProductDetailsPage() {
   const [product, setProduct] = useState(null);
   const [status, setStatus] = useState("loading");
   const [message, setMessage] = useState("");
+  const [cartCount, setCartCount] = useState(0);
 
   const fetchProductDetails = useCallback(async (id) => {
     setStatus("loading");
@@ -33,8 +36,23 @@ function ProductDetailsPage() {
       return;
     }
 
-    fetchProductDetails(productId);
+    Promise.resolve().then(() => fetchProductDetails(productId));
   }, [fetchProductDetails, navigate, productId]);
+
+  useEffect(() => {
+    const syncCartCount = () => setCartCount(getCartCount());
+
+    syncCartCount();
+    window.addEventListener("cart-updated", syncCartCount);
+
+    return () => window.removeEventListener("cart-updated", syncCartCount);
+  }, []);
+
+  const handleAddToCart = () => {
+    addToCart(product);
+    setCartCount(getCartCount());
+    setMessage(`${product.name} added to cart.`);
+  };
 
   return (
     <main className="dashboard-shell">
@@ -45,9 +63,12 @@ function ProductDetailsPage() {
           <p className="dashboard-copy">View full product data from the secured backend API.</p>
         </div>
 
-        <Link className="logout-button" to="/products">
-          Back to products
-        </Link>
+        <div className="header-actions">
+          <CartLink count={cartCount} />
+          <Link className="logout-button" to="/products">
+            Back to products
+          </Link>
+        </div>
       </section>
 
       {message && <p className="status-message">{message}</p>}
@@ -57,7 +78,7 @@ function ProductDetailsPage() {
       {status === "error" && !message && <p className="empty-state">Unable to load product details.</p>}
 
       {status === "ready" && product && (
-        <section className="product-modal" role="region" aria-label="Product details">
+        <section className="product-details-panel" role="region" aria-label="Product details">
           <div className="modal-content">
             <div className="modal-image">
               {product.imageUrl ? <img alt={product.name} src={product.imageUrl} /> : <span>{getInitials(product.name)}</span>}
@@ -83,6 +104,10 @@ function ProductDetailsPage() {
                   <strong>{product.stockQuantity ?? 0}</strong>
                 </article>
               </div>
+
+              <button className="primary-button detail-cart-button" type="button" onClick={handleAddToCart}>
+                Add to cart
+              </button>
             </div>
           </div>
         </section>

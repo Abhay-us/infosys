@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 
 import { addProduct, getProducts, updateProduct } from "../services/productService";
@@ -17,6 +17,7 @@ const INITIAL_PRODUCT = {
 function AdminPage() {
   const navigate = useNavigate();
   const formSectionRef = useRef(null);
+  const imageInputRef = useRef(null);
   const [formData, setFormData] = useState(INITIAL_PRODUCT);
   const [products, setProducts] = useState([]);
   const [categories, setCategories] = useState([]);
@@ -31,7 +32,7 @@ function AdminPage() {
   const totalStock = products.reduce((sum, product) => sum + Number(product.stockQuantity || 0), 0);
   const activeCount = products.filter((product) => product.isActive).length;
 
-  const refreshCategories = async () => {
+  const refreshCategories = useCallback(async () => {
     const response = await getProducts({ activeOnly: false });
     const nextCategories = [
       ...new Set(
@@ -42,9 +43,9 @@ function AdminPage() {
     ].sort((first, second) => first.localeCompare(second));
 
     setCategories(nextCategories);
-  };
+  }, []);
 
-  const loadProducts = async () => {
+  const loadProducts = useCallback(async () => {
     setStatus("loading");
 
     try {
@@ -56,7 +57,7 @@ function AdminPage() {
       setStatus("error");
       setMessage(error.response?.status === 401 ? "Admin session expired. Please login again." : "Unable to load products.");
     }
-  };
+  }, [activeOnly, category, search]);
 
   useEffect(() => {
     const timeoutId = window.setTimeout(() => {
@@ -64,13 +65,13 @@ function AdminPage() {
       void loadProducts();
     }, 300);
     return () => window.clearTimeout(timeoutId);
-  }, [search, category, activeOnly]);
+  }, [loadProducts]);
 
   useEffect(() => {
     refreshCategories().catch(() => {
       setCategories([]);
     });
-  }, []);
+  }, [refreshCategories]);
 
   const handleLogout = () => {
     localStorage.removeItem("token");
@@ -87,10 +88,59 @@ function AdminPage() {
     }));
   };
 
+  const handleImageFile = async (file) => {
+    if (!file) {
+      return;
+    }
+
+    if (!file.type.startsWith("image/")) {
+      setMessage("Please choose a valid image file.");
+      return;
+    }
+
+    try {
+      const imageDataUrl = await compressImageFile(file);
+      setFormData((current) => ({
+        ...current,
+        imageUrl: imageDataUrl,
+      }));
+      setMessage("");
+    } catch {
+      setMessage("Unable to read that image file.");
+    }
+  };
+
+  const handleImageInputChange = (event) => {
+    handleImageFile(event.target.files?.[0]);
+  };
+
+  const handleImageDrop = (event) => {
+    event.preventDefault();
+    handleImageFile(event.dataTransfer.files?.[0]);
+  };
+
+  const handleImageDragOver = (event) => {
+    event.preventDefault();
+  };
+
+  const handleRemoveImage = () => {
+    setFormData((current) => ({
+      ...current,
+      imageUrl: "",
+    }));
+
+    if (imageInputRef.current) {
+      imageInputRef.current.value = "";
+    }
+  };
+
   const handleCancelEdit = () => {
     setEditingId(null);
     setFormData(INITIAL_PRODUCT);
     setMessage("");
+    if (imageInputRef.current) {
+      imageInputRef.current.value = "";
+    }
   };
 
   const handleStartEdit = (product) => {
@@ -136,6 +186,9 @@ function AdminPage() {
       }
       setEditingId(null);
       setFormData(INITIAL_PRODUCT);
+      if (imageInputRef.current) {
+        imageInputRef.current.value = "";
+      }
       await refreshCategories();
       await loadProducts();
       setMessage(isEdit ? "Product updated successfully." : "Product added successfully.");
@@ -190,7 +243,23 @@ function AdminPage() {
           </div>
 
           <input name="category" value={formData.category} onChange={handleChange} placeholder="Category" />
-          <input name="imageUrl" value={formData.imageUrl} onChange={handleChange} placeholder="Image URL" />
+
+          <div className="image-drop-field" onDrop={handleImageDrop} onDragOver={handleImageDragOver}>
+            <input ref={imageInputRef} id="product-image" accept="image/*" type="file" onChange={handleImageInputChange} />
+            {formData.imageUrl ? (
+              <div className="image-preview">
+                <img alt="Product preview" src={formData.imageUrl} />
+                <button type="button" className="admin-remove-image" onClick={handleRemoveImage}>
+                  Remove image
+                </button>
+              </div>
+            ) : (
+              <label htmlFor="product-image">
+                <strong>Drop product image here</strong>
+                <span>or click to choose a file</span>
+              </label>
+            )}
+          </div>
 
           <label className="admin-check">
             <input name="isActive" checked={formData.isActive} onChange={handleChange} type="checkbox" />
@@ -291,6 +360,38 @@ function formatPrice(value) {
     style: "currency",
     currency: "INR",
   }).format(Number(value || 0));
+}
+
+function compressImageFile(file) {
+  return new Promise((resolve, reject) => {
+    const image = new Image();
+    const objectUrl = URL.createObjectURL(file);
+
+    image.onload = () => {
+      const maxSize = 900;
+      const scale = Math.min(1, maxSize / Math.max(image.width, image.height));
+      const width = Math.max(1, Math.round(image.width * scale));
+      const height = Math.max(1, Math.round(image.height * scale));
+      const canvas = document.createElement("canvas");
+      const context = canvas.getContext("2d");
+
+      canvas.width = width;
+      canvas.height = height;
+
+      context.fillStyle = "#ffffff";
+      context.fillRect(0, 0, width, height);
+      context.drawImage(image, 0, 0, width, height);
+      URL.revokeObjectURL(objectUrl);
+      resolve(canvas.toDataURL("image/jpeg", 0.78));
+    };
+
+    image.onerror = () => {
+      URL.revokeObjectURL(objectUrl);
+      reject(new Error("Invalid image file"));
+    };
+
+    image.src = objectUrl;
+  });
 }
 
 function parseApiError(error, fallback) {

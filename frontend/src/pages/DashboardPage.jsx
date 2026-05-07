@@ -1,6 +1,8 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 
+import CartLink from "../components/CartLink";
+import { addToCart, getCartCount } from "../services/cartService";
 import { getProducts } from "../services/productService";
 import "../styles/dashboard.css";
 
@@ -14,6 +16,7 @@ function DashboardPage() {
   const [productId, setProductId] = useState("");
   const [status, setStatus] = useState("loading");
   const [message, setMessage] = useState("");
+  const [cartCount, setCartCount] = useState(0);
 
   useEffect(() => {
     const timeoutId = window.setTimeout(async () => {
@@ -55,6 +58,15 @@ function DashboardPage() {
     loadCategories();
   }, []);
 
+  useEffect(() => {
+    const syncCartCount = () => setCartCount(getCartCount());
+
+    syncCartCount();
+    window.addEventListener("cart-updated", syncCartCount);
+
+    return () => window.removeEventListener("cart-updated", syncCartCount);
+  }, []);
+
   const handleLogout = () => {
     localStorage.removeItem("token");
     localStorage.removeItem("role");
@@ -77,6 +89,13 @@ function DashboardPage() {
     navigate(`/products/${id}`);
   };
 
+  const handleAddToCart = (event, product) => {
+    event.stopPropagation();
+    addToCart(product);
+    setCartCount(getCartCount());
+    setMessage(`${product.name} added to cart.`);
+  };
+
   return (
     <main className="dashboard-shell">
       <section className="dashboard-header">
@@ -86,9 +105,12 @@ function DashboardPage() {
           <p className="dashboard-copy">Search, filter, and inspect products from the secured backend API.</p>
         </div>
 
-        <button className="logout-button" type="button" onClick={handleLogout}>
-          Logout
-        </button>
+        <div className="header-actions">
+          <CartLink count={cartCount} />
+          <button className="logout-button" type="button" onClick={handleLogout}>
+            Logout
+          </button>
+        </div>
       </section>
 
       <section className="toolbar" aria-label="Product filters">
@@ -178,6 +200,9 @@ function DashboardPage() {
                 <strong>{formatPrice(product.price)}</strong>
                 <span>{product.stockQuantity ?? 0} in stock</span>
               </div>
+              <button className="add-cart-button" type="button" onClick={(event) => handleAddToCart(event, product)}>
+                Add to cart
+              </button>
             </article>
           ))}
         {status === "ready" && products.length === 0 && <p className="empty-state">No products match your filters.</p>}

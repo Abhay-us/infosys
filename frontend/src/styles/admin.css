@@ -133,6 +133,66 @@
   gap: 12px;
 }
 
+.image-drop-field {
+  display: grid;
+  min-height: 180px;
+  border: 1px dashed var(--border);
+  border-radius: var(--radius);
+  background: #f8fafc;
+  overflow: hidden;
+}
+
+.image-drop-field input {
+  position: absolute;
+  width: 1px;
+  min-height: 1px;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.image-drop-field label {
+  display: grid;
+  place-items: center;
+  align-content: center;
+  gap: 8px;
+  min-height: 180px;
+  padding: 18px;
+  color: var(--muted);
+  cursor: pointer;
+  text-align: center;
+}
+
+.image-drop-field label strong {
+  color: var(--text);
+  font-size: 16px;
+}
+
+.image-preview {
+  position: relative;
+  min-height: 180px;
+}
+
+.image-preview img {
+  width: 100%;
+  height: 220px;
+  display: block;
+  object-fit: cover;
+}
+
+.admin-remove-image {
+  position: absolute;
+  right: 12px;
+  bottom: 12px;
+  min-height: 36px;
+  padding: 0 12px;
+  border: 0;
+  border-radius: var(--radius);
+  background: rgba(23, 32, 51, 0.9);
+  color: #fff;
+  cursor: pointer;
+  font-weight: 700;
+}
+
 .admin-check {
   display: inline-flex;
   align-items: center;
