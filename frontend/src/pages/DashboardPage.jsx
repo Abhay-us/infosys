@@ -106,6 +106,9 @@ function DashboardPage() {
         </div>
 
         <div className="header-actions">
+          <button className="secondary-button" type="button" onClick={() => navigate("/myorders")}>
+            My orders
+          </button>
           <CartLink count={cartCount} />
           <button className="logout-button" type="button" onClick={handleLogout}>
             Logout

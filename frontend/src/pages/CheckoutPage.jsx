@@ -1,12 +1,15 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 
-import { clearCart, getCartItems, removeCartItem, updateCartItemQuantity } from "../services/cartService";
+import { clearCart, getCartItems } from "../services/cartService";
+import { checkout } from "../services/orderService";
 import "../styles/dashboard.css";
 
-function CartPage() {
+function CheckoutPage() {
   const navigate = useNavigate();
   const [items, setItems] = useState(() => getCartItems());
+  const [status, setStatus] = useState("ready");
+  const [message, setMessage] = useState("");
 
   useEffect(() => {
     const syncCartItems = () => setItems(getCartItems());
@@ -16,55 +19,59 @@ function CartPage() {
     return () => window.removeEventListener("cart-updated", syncCartItems);
   }, []);
 
-  const subtotal = useMemo(() => {
-    return items.reduce((total, item) => total + Number(item.price || 0) * Number(item.quantity || 0), 0);
+  const total = useMemo(() => {
+    return items.reduce((sum, item) => sum + Number(item.price || 0) * Number(item.quantity || 0), 0);
   }, [items]);
 
   const itemCount = useMemo(() => {
-    return items.reduce((total, item) => total + Number(item.quantity || 0), 0);
+    return items.reduce((sum, item) => sum + Number(item.quantity || 0), 0);
   }, [items]);
 
-  const handleQuantityChange = (productId, quantity) => {
-    setItems(updateCartItemQuantity(productId, quantity));
-  };
+  const handlePlaceOrder = async () => {
+    setStatus("placing");
+    setMessage("");
 
-  const handleRemove = (productId) => {
-    setItems(removeCartItem(productId));
-  };
-
-  const handleClearCart = () => {
-    clearCart();
-    setItems([]);
-  };
-
-  const handleCheckout = () => {
-    navigate("/checkout");
+    try {
+      const response = await checkout(items);
+      clearCart();
+      navigate(`/orders/${response.data.id}`, { replace: true, state: { order: response.data } });
+    } catch (error) {
+      setStatus("ready");
+      setMessage(error.response?.data?.message || error.response?.data?.error || "Unable to place order.");
+    }
   };
 
   return (
     <main className="dashboard-shell">
       <section className="dashboard-header">
         <div>
-          <p className="eyebrow">Shopping cart</p>
-          <h1>Cart</h1>
-          <p className="dashboard-copy">Review products added from the catalog.</p>
+          <p className="eyebrow">Checkout</p>
+          <h1>Place order</h1>
+          <p className="dashboard-copy">Confirm the products and total before placing your order.</p>
         </div>
 
-        <Link className="logout-button" to="/products">
-          Back to products
-        </Link>
+        <div className="header-actions">
+          <Link className="secondary-button" to="/myorders">
+            My orders
+          </Link>
+          <Link className="logout-button" to="/cart">
+            Back to cart
+          </Link>
+        </div>
       </section>
+
+      {message && <p className="status-message">{message}</p>}
 
       {items.length === 0 ? (
         <section className="cart-empty">
-          <h2>Your cart is empty</h2>
-          <p>Add products from the product list and they will appear here.</p>
+          <h2>No items to checkout</h2>
+          <p>Add products to cart before placing an order.</p>
           <Link className="primary-button cart-empty-action" to="/products">
             Browse products
           </Link>
         </section>
       ) : (
-        <section className="cart-layout" aria-label="Cart items">
+        <section className="cart-layout" aria-label="Checkout details">
           <div className="cart-items">
             {items.map((item) => (
               <article className="cart-item" key={item.id}>
@@ -79,40 +86,26 @@ function CartPage() {
                   <strong>{formatPrice(item.price)}</strong>
                 </div>
 
-                <div className="cart-item-actions">
-                  <label className="field cart-quantity">
-                    <span>Qty</span>
-                    <input
-                      min="1"
-                      max={item.stockQuantity || undefined}
-                      type="number"
-                      value={item.quantity}
-                      onChange={(event) => handleQuantityChange(item.id, event.target.value)}
-                    />
-                  </label>
-                  <button className="secondary-button" type="button" onClick={() => handleRemove(item.id)}>
-                    Remove
-                  </button>
+                <div className="order-line-total">
+                  <span>Qty {item.quantity}</span>
+                  <strong>{formatPrice(Number(item.price || 0) * Number(item.quantity || 0))}</strong>
                 </div>
               </article>
             ))}
           </div>
 
-          <aside className="cart-summary" aria-label="Cart summary">
-            <h2>Order summary</h2>
+          <aside className="cart-summary" aria-label="Order total">
+            <h2>Order total</h2>
             <div className="summary-row">
               <span>Items</span>
               <strong>{itemCount}</strong>
             </div>
             <div className="summary-row summary-total">
-              <span>Subtotal</span>
-              <strong>{formatPrice(subtotal)}</strong>
+              <span>Total price</span>
+              <strong>{formatPrice(total)}</strong>
             </div>
-            <button className="primary-button" type="button" onClick={handleCheckout}>
-              Checkout
-            </button>
-            <button className="secondary-button" type="button" onClick={handleClearCart}>
-              Clear cart
+            <button className="primary-button" type="button" disabled={status === "placing"} onClick={handlePlaceOrder}>
+              {status === "placing" ? "Placing order..." : "Place order"}
             </button>
           </aside>
         </section>
@@ -140,4 +133,4 @@ function getInitials(name = "") {
     .toUpperCase();
 }
 
-export default CartPage;
+export default CheckoutPage;

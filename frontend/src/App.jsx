@@ -5,6 +5,9 @@ import LoginPage from "./pages/LoginPage";
 import DashboardPage from "./pages/DashboardPage";
 import ProductDetailsPage from "./pages/ProductDetailsPage";
 import CartPage from "./pages/CartPage";
+import CheckoutPage from "./pages/CheckoutPage";
+import MyOrdersPage from "./pages/MyOrdersPage";
+import OrderDetailsPage from "./pages/OrderDetailsPage";
 import AdminPage from "./pages/AdminPage";
 import ProtectedRoute from "./components/ProtectedRoute";
 
@@ -41,6 +44,33 @@ function App() {
           element={
             <ProtectedRoute role="USER">
               <CartPage />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/checkout"
+          element={
+            <ProtectedRoute role="USER">
+              <CheckoutPage />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/myorders"
+          element={
+            <ProtectedRoute role="USER">
+              <MyOrdersPage />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/orders/:orderId"
+          element={
+            <ProtectedRoute role="USER">
+              <OrderDetailsPage />
             </ProtectedRoute>
           }
         />
