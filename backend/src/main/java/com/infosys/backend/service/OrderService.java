@@ -7,6 +7,7 @@ import com.infosys.backend.dto.OrderResponse;
 import com.infosys.backend.model.CustomerOrder;
 import com.infosys.backend.model.OrderItem;
 import com.infosys.backend.model.Product;
+import com.infosys.backend.model.PaymentMode;
 import com.infosys.backend.model.User;
 import com.infosys.backend.repository.OrderRepository;
 import com.infosys.backend.repository.ProductRepository;
@@ -37,6 +38,8 @@ public class OrderService {
         User user = getUser(email);
         CustomerOrder order = new CustomerOrder();
         order.setUser(user);
+        order.setDeliveryAddress(request.getDeliveryAddress().trim());
+        order.setPaymentMode(resolvePaymentMode(request.getPaymentMode()));
 
         BigDecimal total = BigDecimal.ZERO;
 
@@ -107,8 +110,18 @@ public class OrderService {
                 order.getId(),
                 order.getUser().getUserId(),
                 order.getTotalPrice(),
+                order.getDeliveryAddress(),
+                order.getPaymentMode(),
                 order.getStatus(),
                 order.getCreatedAt(),
                 items);
+    }
+
+    private PaymentMode resolvePaymentMode(String paymentMode) {
+        try {
+            return PaymentMode.valueOf(paymentMode.trim().toUpperCase());
+        } catch (IllegalArgumentException ex) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Unsupported payment mode");
+        }
     }
 }

@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 
 import CartLink from "../components/CartLink";
+import SuccessPopup from "../components/SuccessPopup";
 import { addToCart, getCartCount } from "../services/cartService";
 import { getProductById } from "../services/productService";
 import "../styles/dashboard.css";
@@ -13,6 +14,7 @@ function ProductDetailsPage() {
   const [product, setProduct] = useState(null);
   const [status, setStatus] = useState("loading");
   const [message, setMessage] = useState("");
+  const [popupMessage, setPopupMessage] = useState("");
   const [cartCount, setCartCount] = useState(0);
 
   const fetchProductDetails = useCallback(async (id) => {
@@ -51,11 +53,13 @@ function ProductDetailsPage() {
   const handleAddToCart = () => {
     addToCart(product);
     setCartCount(getCartCount());
-    setMessage(`${product.name} added to cart.`);
+    setPopupMessage(`${product.name} added to cart.`);
   };
 
   return (
     <main className="dashboard-shell">
+      <SuccessPopup message={popupMessage} onClose={() => setPopupMessage("")} />
+
       <section className="dashboard-header">
         <div>
           <p className="eyebrow">Product details</p>

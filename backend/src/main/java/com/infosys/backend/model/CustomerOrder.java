@@ -24,6 +24,13 @@ public class CustomerOrder {
     @Column(nullable = false, precision = 12, scale = 2)
     private BigDecimal totalPrice = BigDecimal.ZERO;
 
+    @Column(length = 500)
+    private String deliveryAddress;
+
+    @Enumerated(EnumType.STRING)
+    @Column(length = 30)
+    private PaymentMode paymentMode;
+
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 30)
     private OrderStatus status = OrderStatus.PLACED;
@@ -63,6 +70,22 @@ public class CustomerOrder {
 
     public void setTotalPrice(BigDecimal totalPrice) {
         this.totalPrice = totalPrice;
+    }
+
+    public String getDeliveryAddress() {
+        return deliveryAddress;
+    }
+
+    public void setDeliveryAddress(String deliveryAddress) {
+        this.deliveryAddress = deliveryAddress;
+    }
+
+    public PaymentMode getPaymentMode() {
+        return paymentMode;
+    }
+
+    public void setPaymentMode(PaymentMode paymentMode) {
+        this.paymentMode = paymentMode;
     }
 
     public OrderStatus getStatus() {

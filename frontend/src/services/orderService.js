@@ -12,10 +12,12 @@ const authHeaders = () => {
     : {};
 };
 
-export const checkout = (items) => {
+export const checkout = (items, checkoutDetails) => {
   return axios.post(
     `${API}/checkout`,
     {
+      deliveryAddress: checkoutDetails.deliveryAddress,
+      paymentMode: checkoutDetails.paymentMode,
       items: items.map((item) => ({
         productId: item.id,
         quantity: Number(item.quantity || 1),

@@ -8,6 +8,8 @@ import "../styles/dashboard.css";
 function CheckoutPage() {
   const navigate = useNavigate();
   const [items, setItems] = useState(() => getCartItems());
+  const [deliveryAddress, setDeliveryAddress] = useState("");
+  const [paymentMode, setPaymentMode] = useState("CASH_ON_DELIVERY");
   const [status, setStatus] = useState("ready");
   const [message, setMessage] = useState("");
 
@@ -28,13 +30,27 @@ function CheckoutPage() {
   }, [items]);
 
   const handlePlaceOrder = async () => {
+    if (!deliveryAddress.trim()) {
+      setMessage("Delivery address is required.");
+      return;
+    }
+
     setStatus("placing");
     setMessage("");
 
     try {
-      const response = await checkout(items);
+      const response = await checkout(items, {
+        deliveryAddress: deliveryAddress.trim(),
+        paymentMode,
+      });
       clearCart();
-      navigate(`/orders/${response.data.id}`, { replace: true, state: { order: response.data } });
+      navigate(`/orders/${response.data.id}`, {
+        replace: true,
+        state: {
+          order: response.data,
+          successMessage: "Order placed successfully.",
+        },
+      });
     } catch (error) {
       setStatus("ready");
       setMessage(error.response?.data?.message || error.response?.data?.error || "Unable to place order.");
@@ -96,6 +112,25 @@ function CheckoutPage() {
 
           <aside className="cart-summary" aria-label="Order total">
             <h2>Order total</h2>
+            <label className="field">
+              Delivery address
+              <textarea
+                value={deliveryAddress}
+                onChange={(event) => setDeliveryAddress(event.target.value)}
+                placeholder="House number, street, city, state, pincode"
+                rows="4"
+                required
+              />
+            </label>
+            <label className="field">
+              Payment mode
+              <select value={paymentMode} onChange={(event) => setPaymentMode(event.target.value)} required>
+                <option value="CASH_ON_DELIVERY">Cash on delivery</option>
+                <option value="UPI">UPI</option>
+                <option value="CARD">Credit / debit card</option>
+                <option value="NET_BANKING">Net banking</option>
+              </select>
+            </label>
             <div className="summary-row">
               <span>Items</span>
               <strong>{itemCount}</strong>

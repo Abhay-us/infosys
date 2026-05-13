@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link, useLocation, useParams } from "react-router-dom";
 
+import SuccessPopup from "../components/SuccessPopup";
 import { getMyOrder } from "../services/orderService";
 import "../styles/dashboard.css";
 
@@ -10,6 +11,7 @@ function OrderDetailsPage() {
   const [order, setOrder] = useState(location.state?.order || null);
   const [status, setStatus] = useState(location.state?.order ? "ready" : "loading");
   const [message, setMessage] = useState("");
+  const [popupMessage, setPopupMessage] = useState(location.state?.successMessage || "");
 
   useEffect(() => {
     if (order) {
@@ -35,6 +37,8 @@ function OrderDetailsPage() {
 
   return (
     <main className="dashboard-shell">
+      <SuccessPopup message={popupMessage} onClose={() => setPopupMessage("")} />
+
       <section className="dashboard-header">
         <div>
           <p className="eyebrow">Order details</p>
@@ -87,6 +91,14 @@ function OrderDetailsPage() {
               <span>Date</span>
               <strong>{formatDate(order.createdAt)}</strong>
             </div>
+            <div className="summary-row">
+              <span>Payment</span>
+              <strong>{formatPaymentMode(order.paymentMode)}</strong>
+            </div>
+            <div className="summary-row summary-address">
+              <span>Address</span>
+              <strong>{order.deliveryAddress || "Not available"}</strong>
+            </div>
             <div className="summary-row summary-total">
               <span>Total price</span>
               <strong>{formatPrice(order.totalPrice)}</strong>
@@ -109,6 +121,17 @@ function formatPrice(value) {
 
 function formatDate(value) {
   return value ? new Date(value).toLocaleString("en-IN") : "Not available";
+}
+
+function formatPaymentMode(value = "") {
+  const labels = {
+    CASH_ON_DELIVERY: "Cash on delivery",
+    UPI: "UPI",
+    CARD: "Credit / debit card",
+    NET_BANKING: "Net banking",
+  };
+
+  return labels[value] || "Not available";
 }
 
 function getInitials(name = "") {
