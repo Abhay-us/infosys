@@ -6,6 +6,7 @@ import DashboardPage from "./pages/DashboardPage";
 import ProductDetailsPage from "./pages/ProductDetailsPage";
 import CartPage from "./pages/CartPage";
 import CheckoutPage from "./pages/CheckoutPage";
+import AddressPage from "./pages/AddressPage";
 import MyOrdersPage from "./pages/MyOrdersPage";
 import OrderDetailsPage from "./pages/OrderDetailsPage";
 import AdminPage from "./pages/AdminPage";
@@ -53,6 +54,15 @@ function App() {
           element={
             <ProtectedRoute role="USER">
               <CheckoutPage />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/checkout/address"
+          element={
+            <ProtectedRoute role="USER">
+              <AddressPage />
             </ProtectedRoute>
           }
         />
